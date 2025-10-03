@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+jinja2
+python-multipart
+google-genai
+pillow
+openai
+moviepy==1.0.3
+imageio-ffmpeg
+python-dotenv
