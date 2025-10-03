@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <div class="flex gap-6">
+            <!-- Left Sidebar - Existing Files -->
+            <div class="w-80 flex-shrink-0">
+                <div class="bg-gray-800 rounded-lg shadow-xl p-4 sticky top-4">
+                    <h2 class="text-lg font-semibold mb-4 text-center text-gray-300">Existing Files</h2>
+
+                    <!-- Images Section -->
+                    <div class="mb-6">
+                        <h3 class="text-sm font-medium text-gray-400 mb-2 flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            Images
+                        </h3>
+                        <div id="images-gallery" class="space-y-2 max-h-64 overflow-y-auto">
+                            <!-- Images will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Videos Section -->
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-400 mb-2 flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                            Videos
+                        </h3>
+                        <div id="videos-gallery" class="space-y-2 max-h-64 overflow-y-auto">
+                            <!-- Videos will be populated here -->
+                        </div>
+                    </div>
+
+                    <div id="gallery-loading" class="text-center text-gray-500 text-sm mt-4 hidden">
+                        <div class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                        <span class="ml-2">Loading...</span>
+                    </div>
+
+                    <div id="gallery-empty" class="text-center text-gray-500 text-sm mt-4 hidden">
+                        No files found
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="flex-1">
+
+        <div id="result-container" class="hidden mb-8">
+            <div class="bg-gray-800 rounded-lg shadow-xl p-4">
+                <div class="flex justify-center mb-4">
+                    <!-- Unified media display area -->
+                    <div id="media-display" class="w-[358px] h-[358px] rounded-lg shadow-lg overflow-hidden bg-gray-700 flex items-center justify-center">
+                        <img id="generated-image" src="" alt="Generated image" class="hidden w-full h-full object-cover" />
+                        <video id="generated-video" controls class="hidden max-w-full max-h-full rounded-lg">
+                            Your browser does not support the video tag.
+                        </video>
+                        <div id="media-placeholder" class="text-gray-400 text-center">
+                            <svg class="w-16 h-16 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <p class="text-sm">No media selected</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Video Trimmer Interface -->
+                <div id="video-trimmer" class="hidden mb-4">
+                    <div class="bg-gray-700 rounded-lg p-4">
+                        <h3 class="text-sm font-medium text-gray-300 mb-3 flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                            Trim Video
+                        </h3>
+
+                        <!-- Timeline Container -->
+                        <div class="relative mb-4">
+                            <div id="timeline-container" class="relative bg-gray-600 rounded h-2 cursor-pointer">
+                                <!-- Progress Bar (for normal playback) -->
+                                <div id="progress-bar" class="absolute top-0 left-0 h-full bg-blue-500 rounded opacity-50"></div>
+
+                                <!-- Current Position Indicator -->
+                                <div id="current-position" class="absolute top-0 w-1 h-full bg-white rounded opacity-80 pointer-events-none"></div>
+
+                                <!-- Left Trim Handle -->
+                                <div id="left-handle" class="absolute top-0 w-4 h-4 bg-blue-600 rounded-full border-2 border-white cursor-ew-resize transform -translate-x-2 -translate-y-1 hover:bg-blue-700 transition-colors z-10">
+                                    <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1 h-3 bg-white rounded"></div>
+                                </div>
+
+                                <!-- Right Trim Handle -->
+                                <div id="right-handle" class="absolute top-0 w-4 h-4 bg-blue-600 rounded-full border-2 border-white cursor-ew-resize transform -translate-x-2 -translate-y-1 hover:bg-blue-700 transition-colors z-10">
+                                    <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1 h-3 bg-white rounded"></div>
+                                </div>
+
+                                <!-- Trimmed Region Indicator -->
+                                <div id="trim-region" class="absolute top-0 h-full bg-blue-400 bg-opacity-30 rounded"></div>
+                            </div>
+                        </div>
+
+                        <!-- Time Display -->
+                        <div class="flex justify-between text-xs text-gray-400 mb-2">
+                            <span id="start-time">00:00</span>
+                            <span id="current-time">00:00</span>
+                            <span id="end-time">00:00</span>
+                        </div>
+
+                        <!-- Trimmer Controls -->
+                        <div class="flex gap-2 justify-center">
+                            <button
+                                id="play-trimmed-btn"
+                                class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors"
+                            >
+                                Play Trimmed
+                            </button>
+                            <button
+                                id="reset-trim-btn"
+                                class="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white text-xs font-medium rounded transition-colors"
+                            >
+                                Reset
+                            </button>
+                            <button
+                                id="export-trim-btn"
+                                class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded transition-colors"
+                            >
+                                Export Trimmed
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center flex gap-2 justify-center">
+                    <button
+                        id="download-btn"
+                        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors text-sm hidden"
+                    >
+                        Download
+                    </button>
+                    <button
+                        id="generate-video-btn"
+                        class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors text-sm hidden"
+                    >
+                        Generate Video
+                    </button>
+                    <button
+                        id="next-scene-btn"
+                        class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors text-sm"
+                        title="Add a new scene to the right"
+                    >
+                        Next Scene
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scenes Strip -->
+        <div id="scenes-container" class="mb-8">
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="text-lg font-semibold text-white">Scenes</h2>
+                <div class="flex gap-2">
+                    <button id="play-all-scenes-btn" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg">Play All</button>
+                    <button id="export-full-video-btn" class="px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg">Export Full Video</button>
+                </div>
+            </div>
+            <div class="bg-gray-800 rounded-lg shadow-xl p-3">
+                <div id="scenes-strip" class="flex items-stretch gap-3 overflow-x-auto pb-2"></div>
+            </div>
+        </div>
+
+        <!-- Playlist Modal -->
+        <div id="playlist-modal" class="hidden fixed inset-0 z-50">
+            <div class="absolute inset-0 bg-black bg-opacity-60"></div>
+            <div class="relative mx-auto mt-16 w-11/12 max-w-3xl bg-gray-900 rounded-lg shadow-2xl overflow-hidden">
+                <div class="flex items-center justify-between p-4 border-b border-gray-700">
+                    <h3 class="text-white font-semibold">Playing All Scenes</h3>
+                    <button id="playlist-close-btn" class="text-gray-300 hover:text-white">✕</button>
+                </div>
+                <div class="p-4">
+                    <video id="playlist-video" class="w-full h-auto rounded bg-black" controls></video>
+                    <div class="mt-3 text-sm text-gray-300 flex items-center justify-between">
+                        <div>
+                            <span id="playlist-status">Scene 0 / 0</span>
+                        </div>
+                        <div class="space-x-2">
+                            <button id="playlist-prev-btn" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded">Prev</button>
+                            <button id="playlist-next-btn" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded">Next</button>
+                            <button id="playlist-stop-btn" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded">Stop</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6">
+            <!-- Mode Selector -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-300 mb-2">Generation Mode:</label>
+                <div class="flex gap-4">
+                    <label class="flex items-center">
+                        <input type="radio" name="mode" value="auto" checked class="mr-2 text-blue-600">
+                        <span class="text-sm text-gray-300">Auto (AI decides)</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="mode" value="new" class="mr-2 text-blue-600">
+                        <span class="text-sm text-gray-300">New Image</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="mode" value="edit" class="mr-2 text-blue-600">
+                        <span class="text-sm text-gray-300">Edit Existing</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Image Upload (shown only in edit mode) -->
+            <div id="image-upload-section" class="mb-4 hidden">
+                <label class="block text-sm font-medium text-gray-300 mb-2">Upload Image to Edit:</label>
+                <input
+                    type="file"
+                    id="image-upload"
+                    accept="image/*"
+                    class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+                />
+                <p class="text-xs text-gray-500 mt-1">Supported formats: PNG, JPG, JPEG, GIF, WebP</p>
+            </div>
+
+            <div class="flex gap-4 mb-6">
+                <div class="flex-1 relative">
+                    <input
+                        type="text"
+                        id="prompt-input"
+                        placeholder="Describe the image you want to generate..."
+                        class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
+                    />
+                    <button
+                        id="voice-btn"
+                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                        title="Voice input"
+                    >
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                        </svg>
+                    </button>
+                </div>
+                <button
+                    id="generate-btn"
+                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    Generate
+                </button>
+            </div>
+
+            <div id="status-message" class="text-center text-gray-400 mb-4 hidden">
+                <div id="loading-spinner" class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 hidden"></div>
+                <span id="status-text"></span>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
